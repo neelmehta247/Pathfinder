@@ -49,7 +49,7 @@ public class MapsActivity extends AppCompatActivity {
 
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         String provider = locationManager.getBestProvider(new Criteria(), true);
-        Location location = locationManager.getLastKnownLocation(provider);
+        @SuppressWarnings("ResourceType") Location location = locationManager.getLastKnownLocation(provider);
 
         if (location != null) {
             double lat = location.getLatitude();
