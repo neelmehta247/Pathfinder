@@ -9,8 +9,9 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -126,11 +127,34 @@ public class MapsActivity extends AppCompatActivity {
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
-            public boolean onMarkerClick(Marker marker) {
+            public boolean onMarkerClick(final Marker marker) {
                 View dialogView = View.inflate(MapsActivity.this, R.layout.marker_popup_view, null);
+                final Address location = markerAdressList.get(markerList.indexOf(marker));
+                TextView titleText = (TextView) dialogView.findViewById(R.id.titleText);
+                Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
+                Button doneButton = (Button) dialogView.findViewById(R.id.doneButton);
 
-                AlertDialog alertDialog = new AlertDialog.Builder(MapsActivity.this).setView(dialogView).create();
+                final AlertDialog alertDialog = new AlertDialog.Builder(MapsActivity.this).setView(dialogView).create();
                 alertDialog.show();
+
+                doneButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        alertDialog.dismiss();
+                    }
+                });
+
+                deleteButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        alertDialog.dismiss();
+                        markerList.remove(markerList.indexOf(marker));
+                        markerAdressList.remove(markerAdressList.indexOf(location));
+                        marker.remove();
+                    }
+                });
+
+                titleText.setText(location.getAddressLine(0));
                 return true;
             }
         });
