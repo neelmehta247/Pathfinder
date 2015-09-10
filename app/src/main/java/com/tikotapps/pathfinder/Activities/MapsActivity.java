@@ -1,4 +1,4 @@
-package com.tikotapps.pathfinder;
+package com.tikotapps.pathfinder.Activities;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.software.shell.fab.ActionButton;
+import com.tikotapps.pathfinder.R;
 
 import java.io.IOException;
 import java.util.ArrayList;
