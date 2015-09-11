@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.location.Address;
 import android.location.Criteria;
-import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -12,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -22,17 +22,17 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.software.shell.fab.ActionButton;
+import com.tikotapps.pathfinder.AsyncTasks.GeocoderLatLngTask;
+import com.tikotapps.pathfinder.Interfaces.AsyncTaskCallbacks;
 import com.tikotapps.pathfinder.R;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
-public class MapsActivity extends AppCompatActivity {
+public class MapsActivity extends AppCompatActivity implements AsyncTaskCallbacks {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private ActionButton showListButton;
     private ViewFlipper viewFlipper;
-    private Geocoder geocoder;
     private ArrayList<Marker> markerList;
     private ArrayList<Address> markerAdressList;
 
@@ -44,7 +44,6 @@ public class MapsActivity extends AppCompatActivity {
 
         showListButton = (ActionButton) findViewById(R.id.showList);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
-        geocoder = new Geocoder(this);
         markerList = new ArrayList<>();
         markerAdressList = new ArrayList<>();
 
@@ -105,11 +104,7 @@ public class MapsActivity extends AppCompatActivity {
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-                Address location = getLocation(marker.getPosition());
-                if (location != null) {
-                    markerAdressList.remove(markerList.indexOf(marker));
-                    markerAdressList.add(markerList.indexOf(marker), location);
-                }
+                new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, false, marker).execute(marker.getPosition());
             }
         });
 
@@ -117,12 +112,7 @@ public class MapsActivity extends AppCompatActivity {
 
             @Override
             public void onMapClick(LatLng latLng) {
-                Address location = getLocation(latLng);
-                if (location != null) {
-                    Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
-                    markerList.add(marker);
-                    markerAdressList.add(location);
-                }
+                new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, true, null).execute(latLng);
             }
         });
 
@@ -161,12 +151,36 @@ public class MapsActivity extends AppCompatActivity {
         });
     }
 
-    private Address getLocation(LatLng latLng) {
-        try {
-            return geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1).get(0);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+    @Override
+    public void asyncTaskOnPreExecute(String asyncTaskName) {
+        if (asyncTaskName.equals(GeocoderLatLngTask.class.getName())) {
+            Toast.makeText(this, "Fetching location", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void asyncTaskOnProgressUpdate(String asyncTaskName, String progress) {
+
+    }
+
+    @Override
+    public void asyncTaskOnPostUpdate(String asyncTaskName, Object result, Object otherParam, boolean isNewMarker) {
+        if (asyncTaskName.equals(GeocoderLatLngTask.class.getName())) {
+            Address location = (Address) result;
+            if (isNewMarker) {
+                LatLng latLng = (LatLng) otherParam;
+                if (location != null) {
+                    Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+                    markerList.add(marker);
+                    markerAdressList.add(location);
+                }
+            } else {
+                Marker marker = (Marker) otherParam;
+                if (location != null) {
+                    markerAdressList.remove(markerList.indexOf(marker));
+                    markerAdressList.add(markerList.indexOf(marker), location);
+                }
+            }
         }
     }
 }
