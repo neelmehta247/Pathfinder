@@ -14,19 +14,18 @@ import java.io.IOException;
 /**
  * Created by neel on 10/09/15.
  */
-public class GeocoderLatLngTask extends AsyncTask<LatLng, Void, Address> {
+public class GeocoderLatLngTask extends AsyncTask<Void, Void, Address> {
 
     AsyncTaskCallbacks mCallbacks;
     Geocoder geocoder;
-    boolean isNewMarker;
     Marker marker;
     LatLng latLng;
 
-    public GeocoderLatLngTask(AsyncTaskCallbacks callbacks, Context context, boolean isNewMarker, Marker marker) {
+    public GeocoderLatLngTask(AsyncTaskCallbacks callbacks, Context context, Marker marker) {
         mCallbacks = callbacks;
         geocoder = new Geocoder(context);
-        this.isNewMarker = isNewMarker;
         this.marker = marker;
+        latLng = marker.getPosition();
     }
 
     @Override
@@ -36,9 +35,8 @@ public class GeocoderLatLngTask extends AsyncTask<LatLng, Void, Address> {
     }
 
     @Override
-    protected Address doInBackground(LatLng... latLngs) {
+    protected Address doInBackground(Void... voids) {
         Address location;
-        latLng = latLngs[0];
         try {
             location = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1).get(0);
         } catch (IOException e) {
@@ -50,10 +48,6 @@ public class GeocoderLatLngTask extends AsyncTask<LatLng, Void, Address> {
     @Override
     protected void onPostExecute(Address address) {
         super.onPostExecute(address);
-        if (isNewMarker) {
-            mCallbacks.asyncTaskOnPostUpdate(getClass().getName(), address, latLng, true);
-        } else {
-            mCallbacks.asyncTaskOnPostUpdate(getClass().getName(), address, marker, false);
-        }
+        mCallbacks.asyncTaskOnPostUpdate(getClass().getName(), address, marker);
     }
 }

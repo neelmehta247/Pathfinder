@@ -6,6 +6,8 @@ import android.location.Address;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -106,7 +108,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             public void onMarkerDragEnd(Marker marker) {
                 markerAdressList.remove(markerList.indexOf(marker));
                 markerAdressList.add(markerList.indexOf(marker), null);
-                new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, false, marker).execute(marker.getPosition());
+                runAsyncTask(marker);
             }
         });
 
@@ -114,7 +116,10 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
             @Override
             public void onMapClick(LatLng latLng) {
-                new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, true, null).execute(latLng);
+                Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+                markerList.add(marker);
+                markerAdressList.add(null);
+                runAsyncTask(marker);
             }
         });
 
@@ -148,10 +153,10 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 });
 
                 if (location != null) {
-                    titleText.setText(location.getAddressLine(0));
+                    titleText.setText(location.getAddressLine(0) + ", " + location.getAddressLine(1));
                 } else {
                     titleText.setText(marker.getPosition().latitude + ", " + marker.getPosition().longitude);
-                    new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, false, marker).execute(marker.getPosition());
+                    runAsyncTask(marker);
                 }
                 return true;
             }
@@ -171,23 +176,21 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
     }
 
     @Override
-    public void asyncTaskOnPostUpdate(String asyncTaskName, Object result, Object otherParam, boolean isNewMarker) {
+    public void asyncTaskOnPostUpdate(String asyncTaskName, Object result, Marker marker) {
         if (asyncTaskName.equals(GeocoderLatLngTask.class.getName())) {
             Address location = (Address) result;
-            if (isNewMarker) {
-                LatLng latLng = (LatLng) otherParam;
-                if (location != null) {
-                    Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
-                    markerList.add(marker);
-                    markerAdressList.add(location);
-                }
-            } else {
-                Marker marker = (Marker) otherParam;
-                if (location != null) {
-                    markerAdressList.remove(markerList.indexOf(marker));
-                    markerAdressList.add(markerList.indexOf(marker), location);
-                }
+            if (location != null) {
+                markerAdressList.remove(markerList.indexOf(marker));
+                markerAdressList.add(markerList.indexOf(marker), location);
             }
+        }
+    }
+
+    private void runAsyncTask(Marker marker) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            new GeocoderLatLngTask(this, this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } else {
+            new GeocoderLatLngTask(this, this, marker).execute();
         }
     }
 }
