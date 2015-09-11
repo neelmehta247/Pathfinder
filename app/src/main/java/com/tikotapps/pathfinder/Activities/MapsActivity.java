@@ -104,6 +104,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
+                markerAdressList.remove(markerList.indexOf(marker));
+                markerAdressList.add(markerList.indexOf(marker), null);
                 new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, false, marker).execute(marker.getPosition());
             }
         });
@@ -145,7 +147,12 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     }
                 });
 
-                titleText.setText(location.getAddressLine(0));
+                if (location != null) {
+                    titleText.setText(location.getAddressLine(0));
+                } else {
+                    titleText.setText(marker.getPosition().latitude + ", " + marker.getPosition().longitude);
+                    new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, false, marker).execute(marker.getPosition());
+                }
                 return true;
             }
         });
@@ -154,7 +161,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
     @Override
     public void asyncTaskOnPreExecute(String asyncTaskName) {
         if (asyncTaskName.equals(GeocoderLatLngTask.class.getName())) {
-            Toast.makeText(this, "Fetching location", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, this.getResources().getText(R.string.fetchingText), Toast.LENGTH_SHORT).show();
         }
     }
 

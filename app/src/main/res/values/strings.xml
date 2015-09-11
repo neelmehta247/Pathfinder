@@ -2,4 +2,5 @@
     <string name="app_name">Pathfinder</string>
     <string name="doneText">Done</string>
     <string name="deleteText">Delete</string>
+    <string name="fetchingText">Fetching Location</string>
 </resources>
