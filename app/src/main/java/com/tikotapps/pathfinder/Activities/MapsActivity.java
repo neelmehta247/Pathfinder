@@ -7,7 +7,6 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -108,7 +107,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             public void onMarkerDragEnd(Marker marker) {
                 markerAdressList.remove(markerList.indexOf(marker));
                 markerAdressList.add(markerList.indexOf(marker), null);
-                runAsyncTask(marker);
+                new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         });
 
@@ -119,7 +118,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
                 markerList.add(marker);
                 markerAdressList.add(null);
-                runAsyncTask(marker);
+                new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         });
 
@@ -156,7 +155,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     titleText.setText(location.getAddressLine(0) + ", " + location.getAddressLine(1));
                 } else {
                     titleText.setText(marker.getPosition().latitude + ", " + marker.getPosition().longitude);
-                    runAsyncTask(marker);
+                    new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 }
                 return true;
             }
@@ -183,14 +182,6 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 markerAdressList.remove(markerList.indexOf(marker));
                 markerAdressList.add(markerList.indexOf(marker), location);
             }
-        }
-    }
-
-    private void runAsyncTask(Marker marker) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            new GeocoderLatLngTask(this, this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        } else {
-            new GeocoderLatLngTask(this, this, marker).execute();
         }
     }
 }
