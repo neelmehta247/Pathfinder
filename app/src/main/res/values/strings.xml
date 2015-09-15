@@ -3,4 +3,5 @@
     <string name="doneText">Done</string>
     <string name="deleteText">Delete</string>
     <string name="fetchingText">Fetching Location</string>
+    <string name="editText">Edit</string>
 </resources>

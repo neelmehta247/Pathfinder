@@ -26,7 +26,9 @@ import com.software.shell.fab.ActionButton;
 import com.tikotapps.pathfinder.AsyncTasks.GeocoderLatLngTask;
 import com.tikotapps.pathfinder.Interfaces.AsyncTaskCallbacks;
 import com.tikotapps.pathfinder.R;
+import com.tikotapps.pathfinder.Setup.Pathfinder;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class MapsActivity extends AppCompatActivity implements AsyncTaskCallbacks {
@@ -34,8 +36,6 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private ActionButton showListButton;
     private ViewFlipper viewFlipper;
-    private ArrayList<Marker> markerList;
-    private ArrayList<Address> markerAdressList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,8 +45,6 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
         showListButton = (ActionButton) findViewById(R.id.showList);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
-        markerList = new ArrayList<>();
-        markerAdressList = new ArrayList<>();
 
         showListButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -105,8 +103,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-                markerAdressList.remove(markerList.indexOf(marker));
-                markerAdressList.add(markerList.indexOf(marker), null);
+                getMarkerAddressList().remove(getMarkerList().indexOf(marker));
+                getMarkerAddressList().add(getMarkerList().indexOf(marker), null);
                 new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         });
@@ -116,8 +114,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             @Override
             public void onMapClick(LatLng latLng) {
                 Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
-                markerList.add(marker);
-                markerAdressList.add(null);
+                getMarkerList().add(marker);
+                getMarkerAddressList().add(null);
                 new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         });
@@ -126,7 +124,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             @Override
             public boolean onMarkerClick(final Marker marker) {
                 View dialogView = View.inflate(MapsActivity.this, R.layout.marker_popup_view, null);
-                final Address location = markerAdressList.get(markerList.indexOf(marker));
+                final String address = getMarkerAddressList().get(getMarkerList().indexOf(marker));
                 TextView titleText = (TextView) dialogView.findViewById(R.id.titleText);
                 Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
                 Button doneButton = (Button) dialogView.findViewById(R.id.doneButton);
@@ -145,21 +143,30 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     @Override
                     public void onClick(View view) {
                         alertDialog.dismiss();
-                        markerList.remove(markerList.indexOf(marker));
-                        markerAdressList.remove(markerAdressList.indexOf(location));
+                        getMarkerList().remove(getMarkerList().indexOf(marker));
+                        getMarkerAddressList().remove(getMarkerAddressList().indexOf(address));
                         marker.remove();
                     }
                 });
 
-                if (location != null) {
-                    titleText.setText(location.getAddressLine(0) + ", " + location.getAddressLine(1));
+                if (address != null) {
+                    titleText.setText(address);
                 } else {
-                    titleText.setText(marker.getPosition().latitude + ", " + marker.getPosition().longitude);
+                    DecimalFormat format = new DecimalFormat("#.##");
+                    titleText.setText(format.format(marker.getPosition().latitude) + ", " + format.format(marker.getPosition().longitude));
                     new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 }
                 return true;
             }
         });
+    }
+
+    private ArrayList<Marker> getMarkerList() {
+        return ((Pathfinder) getApplication()).getMarkerList();
+    }
+
+    private ArrayList<String> getMarkerAddressList() {
+        return ((Pathfinder) getApplication()).getMarkerAddressList();
     }
 
     @Override
@@ -179,8 +186,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         if (asyncTaskName.equals(GeocoderLatLngTask.class.getName())) {
             Address location = (Address) result;
             if (location != null) {
-                markerAdressList.remove(markerList.indexOf(marker));
-                markerAdressList.add(markerList.indexOf(marker), location);
+                getMarkerAddressList().remove(getMarkerList().indexOf(marker));
+                getMarkerAddressList().add(getMarkerList().indexOf(marker), location.getAddressLine(0) + ", " + location.getAddressLine(1));
             }
         }
     }
