@@ -5,12 +5,12 @@ package com.tikotapps.pathfinder.Database;
  */
 public class Task {
 
-    int id;
-    String name;
-    String task;
-    long deadline;
-    long time_required;
-    double latitude;
-    double longitude;
+    public int id;
+    public String name;
+    public String task;
+    public long deadline;
+    public long time_required;
+    public double latitude;
+    public double longitude;
 
 }
