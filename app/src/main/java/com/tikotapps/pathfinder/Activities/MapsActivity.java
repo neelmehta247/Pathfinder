@@ -22,10 +22,12 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.software.shell.fab.ActionButton;
 import com.tikotapps.pathfinder.AsyncTasks.GeocoderLatLngTask;
 import com.tikotapps.pathfinder.Interfaces.AsyncTaskCallbacks;
 import com.tikotapps.pathfinder.R;
+import com.tikotapps.pathfinder.Setup.CustomMapTileProvider;
 import com.tikotapps.pathfinder.Setup.Pathfinder;
 
 import java.text.DecimalFormat;
@@ -76,6 +78,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         mMap.setBuildingsEnabled(true);
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(false);
+
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(new CustomMapTileProvider(getResources().getAssets())));
 
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         String provider = locationManager.getBestProvider(new Criteria(), true);
