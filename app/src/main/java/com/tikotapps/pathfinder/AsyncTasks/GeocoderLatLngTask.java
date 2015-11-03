@@ -39,7 +39,7 @@ public class GeocoderLatLngTask extends AsyncTask<Void, Void, Address> {
         Address location;
         try {
             location = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1).get(0);
-        } catch (IOException e) {
+        } catch (IOException | IndexOutOfBoundsException e) {
             location = null;
         }
         return location;
