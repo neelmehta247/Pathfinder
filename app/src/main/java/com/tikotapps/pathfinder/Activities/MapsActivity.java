@@ -8,7 +8,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -139,8 +138,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     public void onClick(View view) {
                         DatePickerFragment datePickerFragment = new DatePickerFragment();
                         datePickerFragment.setCallbacks(MapsActivity.this);
-                        DialogFragment newFragment = datePickerFragment;
-                        newFragment.show(getSupportFragmentManager(), "datePicker");
+                        datePickerFragment.show(getSupportFragmentManager(), "datePicker");
                     }
                 });
 
