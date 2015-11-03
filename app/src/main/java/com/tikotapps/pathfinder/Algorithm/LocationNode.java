@@ -35,6 +35,9 @@ public class LocationNode {
 
     public double timeTillFinishedFrom(LocationNode location) {
         return timeFrom(location) + task.time_required / 3600;
+        //TODO Caching the distances to various locations to minimise network calls made
+        //TODO Mode of transport
+        //TODO Offline approximations
     }
 
     @Override
