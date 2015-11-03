@@ -4,4 +4,9 @@
     <string name="deleteText">Delete</string>
     <string name="fetchingText">Fetching Location</string>
     <string name="editText">Edit</string>
+    <array name="spinner_items">
+        <item>s</item>
+        <item>mins</item>
+        <item>hours</item>
+    </array>
 </resources>
