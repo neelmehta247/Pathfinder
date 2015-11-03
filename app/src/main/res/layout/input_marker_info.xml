@@ -17,7 +17,7 @@
             android:textAppearance="?android:textAppearanceMedium" />
 
         <EditText
-            android:id="@+id/exitTextTask"
+            android:id="@+id/editTextTask"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Describe the task" />
@@ -35,17 +35,27 @@
             android:textAppearance="?android:textAppearanceMedium" />
 
         <EditText
-            android:id="@+id/exitTextTimeRequired"
+            android:id="@+id/editTextTimeRequired"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Time required"
-            android:inputType="numberDecimal" />
+            android:inputType="number" />
 
         <Spinner
+            android:id="@+id/spinnerTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:entries="@array/spinner_items" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/buttonNext"
+        style="?android:borderlessButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:layout_marginTop="18dp"
+        android:text="Next" />
 
 </LinearLayout>

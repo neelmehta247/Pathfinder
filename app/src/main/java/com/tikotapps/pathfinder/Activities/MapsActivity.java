@@ -8,9 +8,13 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
@@ -25,7 +29,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.software.shell.fab.ActionButton;
 import com.tikotapps.pathfinder.AsyncTasks.GeocoderLatLngTask;
+import com.tikotapps.pathfinder.Fragments.DatePickerFragment;
 import com.tikotapps.pathfinder.Interfaces.AsyncTaskCallbacks;
+import com.tikotapps.pathfinder.Interfaces.DatePickerDialogCallbacks;
 import com.tikotapps.pathfinder.R;
 import com.tikotapps.pathfinder.Setup.CustomMapTileProvider;
 import com.tikotapps.pathfinder.Setup.Pathfinder;
@@ -33,11 +39,12 @@ import com.tikotapps.pathfinder.Setup.Pathfinder;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-public class MapsActivity extends AppCompatActivity implements AsyncTaskCallbacks {
+public class MapsActivity extends AppCompatActivity implements AsyncTaskCallbacks, DatePickerDialogCallbacks {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private ActionButton showListButton;
     private ViewFlipper viewFlipper;
+    private DatePickerDialogCallbacks datePickerCallbacks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +124,26 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
             @Override
             public void onMapClick(LatLng latLng) {
+                View basicInfoDialog = View.inflate(MapsActivity.this, R.layout.input_marker_info, null);
+
+                EditText textTask = (EditText) basicInfoDialog.findViewById(R.id.editTextTask);
+                EditText textTime = (EditText) basicInfoDialog.findViewById(R.id.editTextTimeRequired);
+                Button buttonNext = (Button) basicInfoDialog.findViewById(R.id.buttonNext);
+                Spinner spinnerTime = (Spinner) basicInfoDialog.findViewById(R.id.spinnerTime);
+
+                AlertDialog alertDialog = new AlertDialog.Builder(MapsActivity.this).setView(basicInfoDialog).create();
+                alertDialog.show();
+
+                buttonNext.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        DatePickerFragment datePickerFragment = new DatePickerFragment();
+                        datePickerFragment.setCallbacks(MapsActivity.this);
+                        DialogFragment newFragment = datePickerFragment;
+                        newFragment.show(getSupportFragmentManager(), "datePicker");
+                    }
+                });
+
                 Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
                 getMarkerList().add(marker);
                 getMarkerAddressList().add(null);
@@ -194,5 +221,13 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 getMarkerAddressList().add(getMarkerList().indexOf(marker), location.getAddressLine(0) + ", " + location.getAddressLine(1));
             }
         }
+    }
+
+    @Override
+    public void onDateSet(DatePicker view, int year, int month, int date) {
+    }
+
+    @Override
+    public void onDatePickerCanceled() {
     }
 }
