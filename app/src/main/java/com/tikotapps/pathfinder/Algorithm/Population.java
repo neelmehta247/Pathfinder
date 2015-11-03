@@ -27,6 +27,12 @@ public class Population {
         trips[index] = individual;
     }
 
+    public void eliminate(LocationNode locationNode) {
+        for (int i = 0; i < trips.length; i++) {
+            trips[i].removeLocation(locationNode);
+        }
+    }
+
     public TripIndividual getTrip(int index) {
         return trips[index];
     }

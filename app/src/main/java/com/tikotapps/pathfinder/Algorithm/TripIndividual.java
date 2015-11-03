@@ -42,6 +42,13 @@ public class TripIndividual {
         time = 0;
     }
 
+    public void removeLocation(LocationNode locationNode) {
+        locations.remove(locationNode);
+
+        fitness = 0;
+        time = 0;
+    }
+
     public double getFitness() {
         if (fitness == 0) { //if fitness is 0, it needs to be calculated
             fitness = 1 / getTime();
