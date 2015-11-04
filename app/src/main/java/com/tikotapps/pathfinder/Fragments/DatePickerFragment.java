@@ -18,6 +18,8 @@ import java.util.Calendar;
 public class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
 
     DatePickerDialogCallbacks mCallbacks;
+    DatePickerDialog dialog;
+    boolean isNew;
 
     @NonNull
     @Override
@@ -29,7 +31,7 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DAY_OF_MONTH);
 
-        DatePickerDialog dialog = new DatePickerDialog(getActivity(), this, year, month, day);
+        dialog = new DatePickerDialog(getActivity(), this, year, month, day);
         dialog.setTitle("By when does the task have to be finished?");
         return dialog;
     }
@@ -40,11 +42,12 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
         mCallbacks.onDatePickerCanceled();
     }
 
-    public void setCallbacks(DatePickerDialogCallbacks callbacks) {
+    public void setData(DatePickerDialogCallbacks callbacks, boolean isNew) {
         mCallbacks = callbacks;
+        this.isNew = isNew;
     }
 
     public void onDateSet(DatePicker view, int year, int month, int day) {
-        mCallbacks.onDateSet(view, year, month, day);
+        mCallbacks.onDateSet(view, year, month, day, isNew);
     }
 }

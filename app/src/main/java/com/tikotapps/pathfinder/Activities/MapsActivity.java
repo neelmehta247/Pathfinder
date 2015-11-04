@@ -169,7 +169,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
                 new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-                ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
+                taskRecyclerView.setAdapter(new DisplayTaskAdapter(MapsActivity.this, getTaskList()));
             }
         });
 
@@ -221,7 +221,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                             spinnerSelection = spinnerTime.getSelectedItemPosition();
                             basicInfoAlertDialog.dismiss();
                             DatePickerFragment datePickerFragment = new DatePickerFragment();
-                            datePickerFragment.setCallbacks(MapsActivity.this);
+                            datePickerFragment.setData(MapsActivity.this, true);
                             datePickerFragment.show(getSupportFragmentManager(), "datePicker");
                         }
                     }
@@ -238,6 +238,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 TextView informationText = (TextView) dialogView.findViewById(R.id.informationText);
                 Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
                 Button doneButton = (Button) dialogView.findViewById(R.id.doneButton);
+                Button editButton = (Button) dialogView.findViewById(R.id.editButton);
 
                 final AlertDialog alertDialog = new AlertDialog.Builder(MapsActivity.this).setView(dialogView).create();
                 alertDialog.show();
@@ -257,7 +258,61 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                         markerList.remove(markerList.indexOf(marker));
                         marker.remove();
 
-                        ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
+                        taskRecyclerView.setAdapter(new DisplayTaskAdapter(MapsActivity.this, getTaskList()));
+                    }
+                });
+
+                editButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        alertDialog.dismiss();
+
+                        task = getTaskList().get(markerList.indexOf(marker));
+
+                        View basicInfoDialog = View.inflate(MapsActivity.this, R.layout.input_marker_info, null);
+
+                        final EditText textTask = (EditText) basicInfoDialog.findViewById(R.id.editTextTask);
+                        final EditText textTime = (EditText) basicInfoDialog.findViewById(R.id.editTextTimeRequired);
+                        Button buttonNext = (Button) basicInfoDialog.findViewById(R.id.buttonNext);
+                        Button cancelButton = (Button) basicInfoDialog.findViewById(R.id.buttonCancel);
+                        final Spinner spinnerTime = (Spinner) basicInfoDialog.findViewById(R.id.spinnerTime);
+
+                        textTask.setText(task.task);
+                        textTime.setText(String.valueOf(task.time_required));
+                        spinnerTime.setSelection(spinnerSelection);
+
+                        basicInfoAlertDialog = new AlertDialog.Builder(MapsActivity.this).setView(basicInfoDialog).setCancelable(false).create();
+                        basicInfoAlertDialog.show();
+
+                        cancelButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                basicInfoAlertDialog.dismiss();
+
+                                task.task = null;
+                                task.time_required = 0;
+                                task.deadline = 0;
+                                task.name = null;
+                                spinnerSelection = 0;
+                            }
+                        });
+
+                        buttonNext.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                if (textTask.getText().toString().equals("") || textTime.getText().toString().equals("")) {
+                                    Toast.makeText(MapsActivity.this, "Please Enter The Information", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    task.task = textTask.getText().toString();
+                                    task.time_required = Long.parseLong(textTime.getText().toString());
+                                    spinnerSelection = spinnerTime.getSelectedItemPosition();
+                                    basicInfoAlertDialog.dismiss();
+                                    DatePickerFragment datePickerFragment = new DatePickerFragment();
+                                    datePickerFragment.setData(MapsActivity.this, false);
+                                    datePickerFragment.show(getSupportFragmentManager(), "datePicker");
+                                }
+                            }
+                        });
                     }
                 });
 
@@ -338,7 +393,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     db.updateData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)));
                     ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
 
-                    ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
+                    taskRecyclerView.setAdapter(new DisplayTaskAdapter(this, getTaskList()));
                 } catch (IndexOutOfBoundsException ignored) {
                 }
             }
@@ -346,7 +401,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
     }
 
     @Override
-    public void onDateSet(DatePicker view, int year, int month, int date) {
+    public void onDateSet(DatePicker view, int year, int month, int date, boolean isNew) {
         switch (spinnerSelection) {
             case 0:
                 break;
@@ -366,16 +421,28 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             e.printStackTrace();
         }
 
-        task.name = null;
-        LatLng latLng = new LatLng(task.latitude, task.longitude);
-        Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
-        markerList.add(marker);
-        getTaskList().add(task);
-        db.addData(DbHelper.TABLE_TASKS, task);
-        ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
-        new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        if (isNew) {
+            task.name = null;
+            LatLng latLng = new LatLng(task.latitude, task.longitude);
+            Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+            markerList.add(marker);
+            getTaskList().add(task);
+            db.addData(DbHelper.TABLE_TASKS, task);
+            ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
+            new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } else {
+            for (int i = 0; i < getTaskList().size(); i++) {
+                if (getTaskList().get(i).id == task.id) {
+                    getTaskList().remove(i);
+                    getTaskList().add(i, task);
+                    db.updateData(DbHelper.TABLE_TASKS, task);
+                    ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
+                    break;
+                }
+            }
+        }
 
-        ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
+        taskRecyclerView.setAdapter(new DisplayTaskAdapter(this, getTaskList()));
 
         task.task = null;
         task.time_required = 0;

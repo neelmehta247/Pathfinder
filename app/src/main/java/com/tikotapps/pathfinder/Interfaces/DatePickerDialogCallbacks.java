@@ -7,7 +7,7 @@ import android.widget.DatePicker;
  */
 public interface DatePickerDialogCallbacks {
 
-    void onDateSet(DatePicker view, int year, int month, int date);
+    void onDateSet(DatePicker view, int year, int month, int date, boolean isNew);
 
     void onDatePickerCanceled();
 
