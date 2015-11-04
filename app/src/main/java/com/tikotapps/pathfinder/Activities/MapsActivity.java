@@ -251,9 +251,12 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         if (asyncTaskName.equals(GeocoderLatLngTask.class.getName())) {
             Address location = (Address) result;
             if (location != null) {
-                getTaskList().get(markerList.indexOf(marker)).name = location.getAddressLine(0) + ", " + location.getAddressLine(1);
-                db.updateData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)));
-                ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
+                try {
+                    getTaskList().get(markerList.indexOf(marker)).name = location.getAddressLine(0) + ", " + location.getAddressLine(1);
+                    db.updateData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)));
+                    ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
+                } catch (IndexOutOfBoundsException ignored) {
+                }
             }
         }
     }
