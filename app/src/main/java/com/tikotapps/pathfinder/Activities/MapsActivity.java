@@ -38,7 +38,6 @@ import com.tikotapps.pathfinder.R;
 import com.tikotapps.pathfinder.Setup.CustomMapTileProvider;
 import com.tikotapps.pathfinder.Setup.Pathfinder;
 
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -155,6 +154,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 final EditText textTask = (EditText) basicInfoDialog.findViewById(R.id.editTextTask);
                 final EditText textTime = (EditText) basicInfoDialog.findViewById(R.id.editTextTimeRequired);
                 Button buttonNext = (Button) basicInfoDialog.findViewById(R.id.buttonNext);
+                Button cancelButton = (Button) basicInfoDialog.findViewById(R.id.buttonCancel);
                 final Spinner spinnerTime = (Spinner) basicInfoDialog.findViewById(R.id.spinnerTime);
 
                 if (task.task != null && task.time_required != 0) {
@@ -163,8 +163,21 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     spinnerTime.setSelection(spinnerSelection);
                 }
 
-                basicInfoAlertDialog = new AlertDialog.Builder(MapsActivity.this).setView(basicInfoDialog).create();
+                basicInfoAlertDialog = new AlertDialog.Builder(MapsActivity.this).setView(basicInfoDialog).setCancelable(false).create();
                 basicInfoAlertDialog.show();
+
+                cancelButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        basicInfoAlertDialog.dismiss();
+
+                        task.task = null;
+                        task.time_required = 0;
+                        task.deadline = 0;
+                        task.name = null;
+                        spinnerSelection = 0;
+                    }
+                });
 
                 buttonNext.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -193,8 +206,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             public boolean onMarkerClick(final Marker marker) {
                 View dialogView = View.inflate(MapsActivity.this, R.layout.marker_popup_view, null);
 
-                final String address = getTaskList().get(markerList.indexOf(marker)).name;
                 TextView titleText = (TextView) dialogView.findViewById(R.id.titleText);
+                TextView informationText = (TextView) dialogView.findViewById(R.id.informationText);
                 Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
                 Button doneButton = (Button) dialogView.findViewById(R.id.doneButton);
 
@@ -218,11 +231,50 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     }
                 });
 
-                if (address != null) {
-                    titleText.setText(address);
+                titleText.setText(getTaskList().get(markerList.indexOf(marker)).task);
+
+                String address = getTaskList().get(markerList.indexOf(marker)).name;
+                String time = "";
+                if (getTaskList().get(markerList.indexOf(marker)).time_required > 3600) {
+                    if (getTaskList().get(markerList.indexOf(marker)).time_required % 3600 == 0) {
+                        if (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 == 1) {
+                            time += (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 + " hour");
+                        } else {
+                            time += (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 + " hours");
+                        }
+                    } else {
+                        if (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 == 1) {
+                            if ((getTaskList().get(markerList.indexOf(marker)).time_required % 3600) / 60 == 1) {
+                                time += (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 + " hour " + (getTaskList().get(markerList.indexOf(marker)).time_required % 3600) / 60 + " minute");
+                            } else {
+                                time += (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 + " hour " + (getTaskList().get(markerList.indexOf(marker)).time_required % 3600) / 60 + " minutes");
+                            }
+                        } else {
+                            if ((getTaskList().get(markerList.indexOf(marker)).time_required % 3600) / 60 == 1) {
+                                time += (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 + " hours " + (getTaskList().get(markerList.indexOf(marker)).time_required % 3600) / 60 + " minute");
+                            } else {
+                                time += (getTaskList().get(markerList.indexOf(marker)).time_required / 3600 + " hours " + (getTaskList().get(markerList.indexOf(marker)).time_required % 3600) / 60 + " minutes");
+                            }
+                        }
+                    }
+                } else if (getTaskList().get(markerList.indexOf(marker)).time_required > 60) {
+                    if (getTaskList().get(markerList.indexOf(marker)).time_required / 60 == 1) {
+                        time += getTaskList().get(markerList.indexOf(marker)).time_required / 60 + " minute";
+                    } else {
+                        time += getTaskList().get(markerList.indexOf(marker)).time_required / 60 + " minutes";
+                    }
                 } else {
-                    DecimalFormat format = new DecimalFormat("#.##");
-                    titleText.setText(format.format(marker.getPosition().latitude) + ", " + format.format(marker.getPosition().longitude));
+                    if (getTaskList().get(markerList.indexOf(marker)).time_required == 1) {
+                        time += getTaskList().get(markerList.indexOf(marker)).time_required + " second";
+                    } else {
+                        time += getTaskList().get(markerList.indexOf(marker)).time_required + " seconds";
+                    }
+                }
+
+                if (address != null) {
+                    informationText.setText(address + " - " + time);
+                } else {
+                    informationText.setText(time);
                     new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 }
                 return true;
