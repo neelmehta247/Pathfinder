@@ -9,6 +9,9 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -27,6 +30,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.software.shell.fab.ActionButton;
+import com.tikotapps.pathfinder.Adapters.DisplayTaskAdapter;
 import com.tikotapps.pathfinder.AsyncTasks.GeocoderLatLngTask;
 import com.tikotapps.pathfinder.Database.DbHelper;
 import com.tikotapps.pathfinder.Database.DbUtil;
@@ -53,6 +57,7 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
     private ArrayList<Marker> markerList;
     private Task task;
     private int spinnerSelection;
+    private RecyclerView taskRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +75,11 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
         showListButton = (ActionButton) findViewById(R.id.showList);
         viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
+        taskRecyclerView = (RecyclerView) findViewById(R.id.taskRecyclerView);
+
+        taskRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        taskRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        taskRecyclerView.setAdapter(new DisplayTaskAdapter(this, getTaskList()));
 
         showListButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -142,6 +152,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 db.updateData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)));
                 ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
                 new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+                ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
             }
         });
 
@@ -228,6 +240,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                         db.deleteData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)).id);
                         markerList.remove(markerList.indexOf(marker));
                         marker.remove();
+
+                        ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
                     }
                 });
 
@@ -307,6 +321,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     getTaskList().get(markerList.indexOf(marker)).name = location.getAddressLine(0) + ", " + location.getAddressLine(1);
                     db.updateData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)));
                     ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
+
+                    ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
                 } catch (IndexOutOfBoundsException ignored) {
                 }
             }
@@ -342,6 +358,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         db.addData(DbHelper.TABLE_TASKS, task);
         ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
         new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+        ((DisplayTaskAdapter) taskRecyclerView.getAdapter()).updateAdapter(getTaskList());
 
         task.task = null;
         task.time_required = 0;
