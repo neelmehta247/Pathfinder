@@ -102,6 +102,15 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         setUpMapIfNeeded();
     }
 
+    @Override
+    public void onBackPressed() {
+        if (viewFlipper.getDisplayedChild() == 1) {
+            viewFlipper.setDisplayedChild(0);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     private void setUpMapIfNeeded() {
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
