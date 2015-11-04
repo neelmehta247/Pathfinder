@@ -2,7 +2,8 @@ package com.tikotapps.pathfinder.Setup;
 
 import android.app.Application;
 
-import com.google.android.gms.maps.model.Marker;
+import com.tikotapps.pathfinder.Database.DbUtil;
+import com.tikotapps.pathfinder.Database.Task;
 
 import java.util.ArrayList;
 
@@ -11,22 +12,18 @@ import java.util.ArrayList;
  */
 public class Pathfinder extends Application {
 
-    private ArrayList<Marker> markerList;
-    private ArrayList<String> markerAddressList;
+    private ArrayList<Task> taskArrayList;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        markerList = new ArrayList<>(); //Fetch these from the database
-        markerAddressList = new ArrayList<>();
     }
 
-    public ArrayList<Marker> getMarkerList() {
-        return markerList;
+    public void updateTaskArrayList(DbUtil db, String TABLE_NAME) {
+        taskArrayList = db.getAllData(TABLE_NAME);
     }
 
-    public ArrayList<String> getMarkerAddressList() {
-        return markerAddressList;
+    public ArrayList<Task> getTaskArrayList() {
+        return taskArrayList;
     }
-
 }

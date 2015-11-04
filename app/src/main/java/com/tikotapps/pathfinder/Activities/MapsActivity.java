@@ -28,6 +28,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.software.shell.fab.ActionButton;
 import com.tikotapps.pathfinder.AsyncTasks.GeocoderLatLngTask;
+import com.tikotapps.pathfinder.Database.DbHelper;
+import com.tikotapps.pathfinder.Database.DbUtil;
+import com.tikotapps.pathfinder.Database.Task;
 import com.tikotapps.pathfinder.Fragments.DatePickerFragment;
 import com.tikotapps.pathfinder.Interfaces.AsyncTaskCallbacks;
 import com.tikotapps.pathfinder.Interfaces.DatePickerDialogCallbacks;
@@ -36,19 +39,34 @@ import com.tikotapps.pathfinder.Setup.CustomMapTileProvider;
 import com.tikotapps.pathfinder.Setup.Pathfinder;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MapsActivity extends AppCompatActivity implements AsyncTaskCallbacks, DatePickerDialogCallbacks {
 
-    AlertDialog basicInfoAlertDialog;
+    private AlertDialog basicInfoAlertDialog;
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private ActionButton showListButton;
     private ViewFlipper viewFlipper;
+    private DbUtil db;
+    private ArrayList<Marker> markerList;
+    private Task task;
+    private int spinnerSelection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        task = new Task();
+
+        db = new DbUtil(this);
+        ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
+
+        markerList = new ArrayList<>();
+
         setUpMapIfNeeded();
 
         showListButton = (ActionButton) findViewById(R.id.showList);
@@ -100,6 +118,12 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(position));
         }
 
+        for (int i = 0; i < getTaskList().size(); i++) {
+            LatLng latLng = new LatLng(getTaskList().get(i).latitude, getTaskList().get(i).longitude);
+            Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+            markerList.add(marker);
+        }
+
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
             public void onMarkerDragStart(Marker marker) {
@@ -113,8 +137,11 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-                getMarkerAddressList().remove(getMarkerList().indexOf(marker));
-                getMarkerAddressList().add(getMarkerList().indexOf(marker), null);
+                getTaskList().get(markerList.indexOf(marker)).name = null;
+                getTaskList().get(markerList.indexOf(marker)).latitude = marker.getPosition().latitude;
+                getTaskList().get(markerList.indexOf(marker)).longitude = marker.getPosition().longitude;
+                db.updateData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)));
+                ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
                 new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         });
@@ -122,13 +149,19 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
             @Override
-            public void onMapClick(LatLng latLng) {
+            public void onMapClick(final LatLng latLng) {
                 View basicInfoDialog = View.inflate(MapsActivity.this, R.layout.input_marker_info, null);
 
-                EditText textTask = (EditText) basicInfoDialog.findViewById(R.id.editTextTask);
-                EditText textTime = (EditText) basicInfoDialog.findViewById(R.id.editTextTimeRequired);
+                final EditText textTask = (EditText) basicInfoDialog.findViewById(R.id.editTextTask);
+                final EditText textTime = (EditText) basicInfoDialog.findViewById(R.id.editTextTimeRequired);
                 Button buttonNext = (Button) basicInfoDialog.findViewById(R.id.buttonNext);
-                Spinner spinnerTime = (Spinner) basicInfoDialog.findViewById(R.id.spinnerTime);
+                final Spinner spinnerTime = (Spinner) basicInfoDialog.findViewById(R.id.spinnerTime);
+
+                if (task.task != null && task.time_required != 0) {
+                    textTask.setText(task.task);
+                    textTime.setText(String.valueOf(task.time_required));
+                    spinnerTime.setSelection(spinnerSelection);
+                }
 
                 basicInfoAlertDialog = new AlertDialog.Builder(MapsActivity.this).setView(basicInfoDialog).create();
                 basicInfoAlertDialog.show();
@@ -136,17 +169,22 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 buttonNext.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        basicInfoAlertDialog.dismiss();
-                        DatePickerFragment datePickerFragment = new DatePickerFragment();
-                        datePickerFragment.setCallbacks(MapsActivity.this);
-                        datePickerFragment.show(getSupportFragmentManager(), "datePicker");
+                        if (textTask.getText().toString().equals("") || textTime.getText().toString().equals("")) {
+                            Toast.makeText(MapsActivity.this, "Please Enter The Information", Toast.LENGTH_SHORT).show();
+                        } else {
+                            task.name = null;
+                            task.task = textTask.getText().toString();
+                            task.time_required = Long.parseLong(textTime.getText().toString());
+                            task.latitude = latLng.latitude;
+                            task.longitude = latLng.longitude;
+                            spinnerSelection = spinnerTime.getSelectedItemPosition();
+                            basicInfoAlertDialog.dismiss();
+                            DatePickerFragment datePickerFragment = new DatePickerFragment();
+                            datePickerFragment.setCallbacks(MapsActivity.this);
+                            datePickerFragment.show(getSupportFragmentManager(), "datePicker");
+                        }
                     }
                 });
-
-                Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
-                getMarkerList().add(marker);
-                getMarkerAddressList().add(null);
-                new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         });
 
@@ -154,7 +192,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
             @Override
             public boolean onMarkerClick(final Marker marker) {
                 View dialogView = View.inflate(MapsActivity.this, R.layout.marker_popup_view, null);
-                final String address = getMarkerAddressList().get(getMarkerList().indexOf(marker));
+
+                final String address = getTaskList().get(markerList.indexOf(marker)).name;
                 TextView titleText = (TextView) dialogView.findViewById(R.id.titleText);
                 Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
                 Button doneButton = (Button) dialogView.findViewById(R.id.doneButton);
@@ -173,8 +212,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                     @Override
                     public void onClick(View view) {
                         alertDialog.dismiss();
-                        getMarkerList().remove(getMarkerList().indexOf(marker));
-                        getMarkerAddressList().remove(getMarkerAddressList().indexOf(address));
+                        db.deleteData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)).id);
+                        markerList.remove(markerList.indexOf(marker));
                         marker.remove();
                     }
                 });
@@ -191,12 +230,8 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         });
     }
 
-    private ArrayList<Marker> getMarkerList() {
-        return ((Pathfinder) getApplication()).getMarkerList();
-    }
-
-    private ArrayList<String> getMarkerAddressList() {
-        return ((Pathfinder) getApplication()).getMarkerAddressList();
+    private ArrayList<Task> getTaskList() {
+        return ((Pathfinder) getApplication()).getTaskArrayList();
     }
 
     @Override
@@ -216,14 +251,48 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
         if (asyncTaskName.equals(GeocoderLatLngTask.class.getName())) {
             Address location = (Address) result;
             if (location != null) {
-                getMarkerAddressList().remove(getMarkerList().indexOf(marker));
-                getMarkerAddressList().add(getMarkerList().indexOf(marker), location.getAddressLine(0) + ", " + location.getAddressLine(1));
+                getTaskList().get(markerList.indexOf(marker)).name = location.getAddressLine(0) + ", " + location.getAddressLine(1);
+                db.updateData(DbHelper.TABLE_TASKS, getTaskList().get(markerList.indexOf(marker)));
+                ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
             }
         }
     }
 
     @Override
     public void onDateSet(DatePicker view, int year, int month, int date) {
+        switch (spinnerSelection) {
+            case 0:
+                break;
+            case 1:
+                task.time_required = task.time_required * 60;
+                break;
+            case 2:
+                task.time_required = task.time_required * 3600;
+                break;
+        }
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date day = sdf.parse(year + "-" + month + "-" + date);
+            task.deadline = day.getTime() / 1000;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        task.name = null;
+        LatLng latLng = new LatLng(task.latitude, task.longitude);
+        Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+        markerList.add(marker);
+        getTaskList().add(task);
+        db.addData(DbHelper.TABLE_TASKS, task);
+        ((Pathfinder) getApplication()).updateTaskArrayList(db, DbHelper.TABLE_TASKS);
+        new GeocoderLatLngTask(MapsActivity.this, MapsActivity.this, marker).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+        task.task = null;
+        task.time_required = 0;
+        task.deadline = 0;
+        task.name = null;
+        spinnerSelection = 0;
     }
 
     @Override

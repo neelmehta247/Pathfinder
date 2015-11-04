@@ -94,4 +94,8 @@ public class DbUtil {
         cursor.close();
         return task;
     }
+
+    public void deleteData(String TABLE_NAME, int id) {
+        mDbHelper.getWritableDatabase().delete(TABLE_NAME, DbHelper._ID + " = " + id, null);
+    }
 }
