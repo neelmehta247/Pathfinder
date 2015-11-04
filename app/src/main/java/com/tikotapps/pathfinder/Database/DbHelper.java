@@ -36,7 +36,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + TABLE_TASKS + " ( " + _ID + " INTEGER PRIMARY KEY AUTO INCREMENT, " + COLUMN_NAME + " TEXT, "
+        db.execSQL("CREATE TABLE " + TABLE_TASKS + " ( " + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_NAME + " TEXT, "
                 + COLUMN_TASK + " TEXT, " + COLUMN_DEADLINE + " BIGINT, " + COLUMN_TIME + " BIGINT, " + COLUMN_LATITUDE + " TEXT, "
                 + COLUMN_LONGITUDE + " TEXT)");
     }
