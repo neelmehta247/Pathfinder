@@ -21,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
+import com.etiennelawlor.quickreturn.library.enums.QuickReturnViewType;
+import com.etiennelawlor.quickreturn.library.listeners.QuickReturnRecyclerViewOnScrollListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -87,6 +89,11 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 viewFlipper.setDisplayedChild(Math.abs(viewFlipper.getDisplayedChild() - 1));
             }
         });
+
+        QuickReturnRecyclerViewOnScrollListener scrollListener = new QuickReturnRecyclerViewOnScrollListener.Builder(QuickReturnViewType.FOOTER)
+                .footer(showListButton).minFooterTranslation(430).isSnappable(true).build();
+
+        taskRecyclerView.setOnScrollListener(scrollListener);
     }
 
     @Override
