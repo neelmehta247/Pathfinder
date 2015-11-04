@@ -40,10 +40,10 @@ import java.util.ArrayList;
 
 public class MapsActivity extends AppCompatActivity implements AsyncTaskCallbacks, DatePickerDialogCallbacks {
 
+    AlertDialog basicInfoAlertDialog;
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private ActionButton showListButton;
     private ViewFlipper viewFlipper;
-    private DatePickerDialogCallbacks datePickerCallbacks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,12 +130,13 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
                 Button buttonNext = (Button) basicInfoDialog.findViewById(R.id.buttonNext);
                 Spinner spinnerTime = (Spinner) basicInfoDialog.findViewById(R.id.spinnerTime);
 
-                AlertDialog alertDialog = new AlertDialog.Builder(MapsActivity.this).setView(basicInfoDialog).create();
-                alertDialog.show();
+                basicInfoAlertDialog = new AlertDialog.Builder(MapsActivity.this).setView(basicInfoDialog).create();
+                basicInfoAlertDialog.show();
 
                 buttonNext.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        basicInfoAlertDialog.dismiss();
                         DatePickerFragment datePickerFragment = new DatePickerFragment();
                         datePickerFragment.setCallbacks(MapsActivity.this);
                         datePickerFragment.show(getSupportFragmentManager(), "datePicker");
@@ -227,5 +228,6 @@ public class MapsActivity extends AppCompatActivity implements AsyncTaskCallback
 
     @Override
     public void onDatePickerCanceled() {
+        basicInfoAlertDialog.show();
     }
 }
